@@ -28,6 +28,7 @@ class AgentState(object):
         self.theta = 0
 
         self.crashed = False
+        self.cover = False
 
         self.last_x = 0
         self.last_y = 0

@@ -254,7 +254,6 @@ class MultiCarSim(object):
         time_str = "{0:.2f}s".format(self.total_time)
         return self.viewer.render(time=time_str,return_rgb_array = mode=='rgb_array')
 
-
     def _step(self, action):
         step_time = 0.0
         old_state = copy.deepcopy(self.last_state_list)
@@ -284,6 +283,7 @@ class MultiCarSim(object):
             state_a.last_vel = state_a.vel
             state_a.next_phi = self.agent_prop_list[idx].K_phi * action[idx]
             state_a.crashed = False
+            state_a.cover = False
     
     def _integrate_state(self, step_time):
         for idx in range(self.agent_number + self.enermy_number):
@@ -314,14 +314,36 @@ class MultiCarSim(object):
             state.x = state.last_x + move_x * numpy.cos(state.last_theta) - move_y * numpy.sin(state.last_theta)
             state.y = state.last_y + move_x * numpy.sin(state.last_theta) + move_y * numpy.cos(state.last_theta)
             state.theta = (state.last_theta + move_theta)%(2*3.14159)
-
+    
+        for idx in range(self.agent_number + self.enermy_number):
+            state = self.last_state_list[idx]
             for fence in self.fence_list:
                 dist = ((fence.anchor[0]-state.x)**2 + (fence.anchor[1]-state.y)**2)**0.5
                 if dist<fence.radius:
                     state.crashed = True
-        ##TODO
+                    break
+
+        for a_idx in range(self.agent_number):
+            a_state = self.last_state_list[a_idx]
+            for e_idx in range(self.enermy_number):
+                e_state = self.last_state_list[e_idx+self.agent_number]
+                dist = ((e_state.x-a_state.x)**2 + (e_state.y-a_state.y)**2)**0.5
+                    if dist < self.agent_prop_list[a_idx].R_cover:
+                        a_state.cover = True
+                        e_state.cover = True
     
     def _calc_reward_list(self, old_state, new_state):
-        ##TODO
-        ##self.reward_coef['XXXX']*XXXX
-        return [0 for idx in range(self.agent_number+self.enermy_number)]
+        reward_list = []
+        for idx in range(self.agent_number):
+            agent_reward = 0.0
+            agent_reward += self.reward_coef['reach'] if self.last_state_list[idx].cover else 0.0
+            agent_reward += self.reward_coef['crash'] if self.last_state_list[idx].crashed else 0.0
+            reward_list.append(agent_reward)
+        
+        for idx in range(self.enermy_number):
+            agent_reward = 0.0
+            agent_reward += -1.0 * self.reward_coef['reach'] if self.last_state_list[idx+self.agent_number].cover else 0.0
+            agent_reward += self.reward_coef['crash'] if self.last_state_list[idx+self.agent_number].crashed else 0.0
+            reward_list.append(agent_reward)
+
+        return reward_list
