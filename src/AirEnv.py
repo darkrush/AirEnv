@@ -150,6 +150,14 @@ class MultiCarSim(object):
             vy = st*state.vel
             pos = numpy.array([state.x, state.y, ct, st, vx, vy])
             obs_list.append(pos)
+        
+        for idx in range(self.fence_number):
+            fence = self.fence_list[idx]
+            fence_x = fence.anchor[0]
+            fence_y = fence.anchor[1]
+            radius = fence.radius
+            pos = numpy.array([fence_x,fence_y,radius])
+            obs_list.append(pos)
 
         return obs_list
 
