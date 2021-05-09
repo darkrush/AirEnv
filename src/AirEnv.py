@@ -263,7 +263,8 @@ class MultiCarSim(object):
             step_time += self.sim_t
             self.total_time += self.sim_t
             self._integrate_state(step_time)
-            self.render()
+            if self.viewer is not None:
+                self.render()
         
         reward_list = self._calc_reward_list(old_state, self.last_state_list)
 
