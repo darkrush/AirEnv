@@ -26,13 +26,14 @@ def random_reset(field_range, state_before_reset, fence_list):
 
 class MultiCarSim(object):
 
-    def __init__(self, senario_dict, step_t = 40, sim_step = 30):
+    def __init__(self, senario_dict, step_t = 40, sim_step = 30, discrete = [0.0, 0.5, -0.5, 1.0, -1.0]):
 
         #self.global_agent_prop = AgentProp(senario_dict['default_agent'])
 
         self.time_limit = senario_dict['common']['time_limit']
         self.reward_coef = senario_dict['common']['reward_coef']
         self.field_range = senario_dict['common']['field_range']
+        self.discrete = discrete
 
         self.step_t = step_t
         self.sim_step = sim_step
@@ -272,7 +273,13 @@ class MultiCarSim(object):
         return reward_list
     
     def _apply_action(self, action):
-        action = numpy.clip(action, -1.0,1.0)
+        if self.discrete is not None:
+            c_action = []
+            for idx in range(self.agent_number + self.enermy_number):
+                c_action.append(self.discrete[action[idx]])
+
+        else:
+            c_action = numpy.clip(action, -1.0,1.0)
         # set applied forces
 
         for idx in range(self.agent_number + self.enermy_number):
@@ -281,7 +288,7 @@ class MultiCarSim(object):
             state_a.last_y = state_a.y
             state_a.last_theta = state_a.theta
             state_a.last_vel = state_a.vel
-            state_a.next_phi = self.agent_prop_list[idx].K_phi * action[idx]
+            state_a.next_phi = self.agent_prop_list[idx].K_phi * c_action[idx]
             state_a.crashed = False
             state_a.cover = False
             state_a.out_bounds = False
