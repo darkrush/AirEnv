@@ -284,6 +284,7 @@ class MultiCarSim(object):
             state_a.next_phi = self.agent_prop_list[idx].K_phi * action[idx]
             state_a.crashed = False
             state_a.cover = False
+            state_a.out_bounds = False
     
     def _integrate_state(self, step_time):
         for idx in range(self.agent_number + self.enermy_number):
@@ -322,6 +323,11 @@ class MultiCarSim(object):
                 if dist<fence.radius:
                     state.crashed = True
                     break
+            if state.x < self.field_range[0] or
+               state.x > self.field_range[1] or 
+               state.y < self.field_range[2] or 
+               state.y > self.field_range[3] :
+               state.out_bounds = True
 
         for a_idx in range(self.agent_number):
             a_state = self.last_state_list[a_idx]
@@ -336,14 +342,16 @@ class MultiCarSim(object):
         reward_list = []
         for idx in range(self.agent_number):
             agent_reward = 0.0
-            agent_reward += self.reward_coef['reach'] if self.last_state_list[idx].cover else 0.0
+            agent_reward += self.reward_coef['cover'] if self.last_state_list[idx].cover else 0.0
             agent_reward += self.reward_coef['crash'] if self.last_state_list[idx].crashed else 0.0
+            agent_reward += self.reward_coef['out_bounds'] if self.last_state_list[idx].out_bounds else 0.0
             reward_list.append(agent_reward)
         
         for idx in range(self.enermy_number):
             agent_reward = 0.0
-            agent_reward += -1.0 * self.reward_coef['reach'] if self.last_state_list[idx+self.agent_number].cover else 0.0
+            agent_reward += -1.0 * self.reward_coef['cover'] if self.last_state_list[idx+self.agent_number].cover else 0.0
             agent_reward += self.reward_coef['crash'] if self.last_state_list[idx+self.agent_number].crashed else 0.0
+            agent_reward += self.reward_coef['out_bounds'] if self.last_state_list[idx+self.agent_number].out_bounds else 0.0
             reward_list.append(agent_reward)
 
         return reward_list

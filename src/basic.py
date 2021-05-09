@@ -29,6 +29,7 @@ class AgentState(object):
 
         self.crashed = False
         self.cover = False
+        self.out_bounds = False
 
         self.last_x = 0
         self.last_y = 0
