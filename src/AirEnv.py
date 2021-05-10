@@ -138,7 +138,23 @@ class MultiCarSim(object):
             st = numpy.sin(state.theta)
             vx = ct*state.vel
             vy = st*state.vel
-            pos = numpy.array([state.x, state.y, ct, st, vx, vy])
+            
+            min_dist = float('inf')
+            for idx in range(self.fence_number):
+                fence = self.fence_list[idx]
+                fence_x = fence.anchor[0]
+                fence_y = fence.anchor[1]
+                dist = ((fence_x-state.x)**2 + (fence_y-state.y)**2)**0.5
+                if dist<min_dist:
+                    min_dist = dist
+                    min_idx = idx
+            the_nearest_fence = self.fence_list[min_idx]
+            the_nearest_radius = the_nearest_fence.radius
+            abs_angle = numpy.arctan2(the_nearest_fence.y-state.y, the_nearest_fence.x-state.x)
+            ralated_angle = (abs_angle-state.theta)%(2*3.1415)
+
+            pos = numpy.array([state.x, state.y, ct, st, vx, vy, min_dist, the_nearest_radius, ralated_angle])    
+
             obs_list.append(pos)
 
         for idx in range(self.enermy_number):
